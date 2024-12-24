@@ -33,9 +33,9 @@ app.post("/createStudent", async (req, res) => {
 });
 
 // Route to find a student by name
-app.get("/findStudent/:id", async (req, res) => {
+app.get("/findStudent/:name", async (req, res) => {
     try {
-        const foundStudent = await Student.findOne({ _id: req.params.id });
+        const foundStudent = await Student.findOne({ name: req.params.name });
         if (!foundStudent) {
             return res.status(404).send({ message: "Student not found" });
         }
