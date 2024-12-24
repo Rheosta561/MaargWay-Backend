@@ -5,6 +5,7 @@ const Student = require('./Models/Student');
 const connect = require('./Config/Connect');
 connect();
 const cors = require('cors');
+const Student = require('./Models/Student');
 app.use(express.json());
 app.use(express.urlencoded({extended:true}));
 
@@ -30,6 +31,19 @@ app.post("/createStudent", async(req,res)=>{
 
 
 });
+app,get("/findStudent/:name" , (req,res)=>{
+    try {
+        const Student = Student.findOne({name:req.para.name});
+    res.status(200).send(Student);
+        
+    } catch (error) {
+        res.status(404).json({message:"Something Went Wrong",
+            error:error.message
+        });
+        
+    }
+    
+})
 app.post("/updateStudent/:id" , async(req,res)=>{
     try {
         const {
