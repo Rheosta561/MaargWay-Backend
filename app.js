@@ -1,10 +1,12 @@
 const express = require('express');
+require('dotenv').config();
 const app = express();
 const path = require('path');
 const Student = require('./Models/Student');
 const connect = require('./Config/Connect');
 const cors = require('cors');
 const WorkShop = require('./Models/WorkShop');
+const { GoogleGenerativeAI } = require("@google/generative-ai");
 
 // Connect to the database
 connect();
@@ -146,6 +148,52 @@ app.post('/registerWorkshop', async (req, res) => {
         res.status(200).json({ message: 'Successfully Registered', workshop });
     } catch (error) {
         res.status(500).json({ message: 'Something went wrong', error: error.message });
+    }
+});
+
+
+
+// AI based Recommendation API 
+app.get('/AiRecommendation/:userid', async (req, res) => {
+    try {
+        const aiuser = await Student.findById(req.params.userid);
+        if (!aiuser) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        const strengths = aiuser.strengths.join(' ');
+        const weaknesses = aiuser.weaknesses.join(' ');
+        const interests = aiuser.interests.join(' ');
+
+        // Prompt to get heading 
+        const headingPrompt = `
+            Suggest a single heading for a mental health exercise based on the user's strengths: ${strengths}, weaknesses: ${weaknesses}, and interests: ${interests}. 
+    Focus on making it engaging and specific to the user, with an emphasis on their strengths, weaknesses, and interests. Please provide only one heading in not more than 5 words that fits this description.
+        `;
+        const genAI = new GoogleGenerativeAI(process.env.API);
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+        const headingResult = await model.generateContent(headingPrompt);
+        const headingText = await headingResult.response.text();
+
+        // prompt to get hte description
+        const descPrompt = `
+            Based on the following strengths: ${strengths}, weaknesses: ${weaknesses}, and interests: ${interests}, 
+            suggest a mental health exercise in 100-150 words. Focus on a personalized exercise that addresses the strengths, weaknesses, and interests of the user.
+        `;
+        const descResult = await model.generateContent(descPrompt);
+        const descText = await descResult.response.text();
+
+        res.status(200).json({
+            heading: headingText.trim(),  
+            desc: descText.trim()         
+        });
+
+    } catch (error) {
+        console.error('Error generating AI recommendation:', error);
+        res.status(500).json({
+            message: "Something went wrong while generating the recommendation",
+            error: error.message
+        });
     }
 });
 
