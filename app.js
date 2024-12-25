@@ -4,6 +4,7 @@ const path = require('path');
 const Student = require('./Models/Student');
 const connect = require('./Config/Connect');
 const cors = require('cors');
+const WorkShop = require('./Models/WorkShop');
 
 // Connect to the database
 connect();
@@ -17,10 +18,18 @@ app.use(cors());
 app.post("/createStudent", async (req, res) => {
     try {
         const { name, age } = req.body;
+        const existingStudent = await Student.findOne({ name });
+        if (existingStudent) {
+            return res.status(200).send({
+                message: "Student already exists",
+                student: existingStudent,
+            });
+        }
         const newStudent = await Student.create({
             name,
             age,
         });
+
         return res.status(200).send({
             newStudent
         });
@@ -31,6 +40,7 @@ app.post("/createStudent", async (req, res) => {
         });
     }
 });
+
 
 // Route to find a student by name
 app.get("/findStudent/:name", async (req, res) => {
@@ -70,6 +80,75 @@ app.post("/updateStudent/:id", async (req, res) => {
         });
     }
 });
+
+// Route to create WorkShops 
+app.post('/createWorkShop' , async(req,res)=>{
+    try {
+        const {name , desc , image , preferences ,price} = req.body;
+        const newWorkShop = await WorkShop.create({
+            name,
+            preferences:preferences.split(','),
+            image,
+            price,
+            desc
+        });
+
+        res.status(200).send(newWorkShop);
+        
+    } catch (error) {
+        res.status(404).json({
+            message:"Something went wrong",
+            error:error.message,
+        })
+        
+    }
+
+});
+
+// Recommendation Logic Api
+
+app.get('/students/:userId/recommendedWorkshops' , async(req,res)=>{
+    try {
+        const student = await Student.findById(req.params.userId);
+        if(!student){
+            return res.status(404).send("No Student Exists");
+        }
+
+        const workshops = await WorkShop.find();
+        console.log(workshops);
+        const recommendedWorkshops = workshops.filter(workshop => {
+            return workshop.preferences.some(preference => student.preferences.includes(preference));
+        });
+        res.json({recommendedWorkshops});
+        
+    } catch (error) {
+        res.status(500).json({message:"Something went wrong " ,
+            error:error.message
+        });
+        
+    }
+});
+
+app.post('/registerWorkshop', async (req, res) => {
+    try {
+        const { workshopId, userId } = req.body;
+        const workshop = await WorkShop.findById(workshopId);
+        if (!workshop) {
+            return res.status(404).json({ message: 'Workshop not found' });
+        }
+        if (workshop.students.includes(userId)) {
+            return res.status(400).json({ message: 'Student already registered for this workshop' });
+        }
+
+        workshop.students.push(userId);
+        await workshop.save();
+
+        res.status(200).json({ message: 'Successfully Registered', workshop });
+    } catch (error) {
+        res.status(500).json({ message: 'Something went wrong', error: error.message });
+    }
+});
+
 
 // Start the server
 app.listen(3000, () => {
