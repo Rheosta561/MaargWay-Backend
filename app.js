@@ -197,6 +197,61 @@ app.get('/AiRecommendation/:userid', async (req, res) => {
     }
 });
 
+app.get('/' ,async(req,res)=>{
+    const workshops = await WorkShop.find();
+    const workshopNames = workshops.map(workshop => workshop.name);
+    const studentCounts = workshops.map(workshop => workshop.students.length);
+    res.status(200).json({
+        message:"Success ",
+        workshops: workshopNames,
+        students:studentCounts
+    });
+});
+
+// setting postive responses 
+app.put('/:workshopid/response/positive' , async(req,res)=>{
+    try {
+        // const {positive , negative}=req.body;
+    const updatedworkshop = await WorkShop.findOneAndUpdate({_id:req.params.workshopid},{
+        $inc: { positive: 1 } 
+    },{new:true , upsert:true});
+    res.status(200).json({
+        message:"success",
+        data:updatedworkshop
+    });
+        
+    } catch (error) {
+        res.status(404).json({
+            message:"Something went wrong",
+            error:error.message
+        });
+        
+    }
+  
+
+});
+app.put('/:workshopid/response/negative' , async(req,res)=>{
+    try {
+        // const {positive , negative}=req.body;
+    const updatedworkshop = await WorkShop.findOneAndUpdate({_id:req.params.workshopid},{
+        $inc: { negative: 1 } 
+    },{new:true , upsert:true});
+    res.status(200).json({
+        message:"success",
+        data:updatedworkshop
+    });
+        
+    } catch (error) {
+        res.status(404).json({
+            message:"Something went wrong",
+            error:error.message
+        });
+        
+    }
+  
+
+});
+
 
 // Start the server
 app.listen(3000, () => {
