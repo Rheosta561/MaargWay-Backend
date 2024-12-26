@@ -15,6 +15,8 @@ connect();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors());
+app.set('view engine','ejs');
+app.use(express.static(path.join(__dirname , 'public')));
 
 // Route to create a student
 app.post("/createStudent", async (req, res) => {
@@ -42,6 +44,24 @@ app.post("/createStudent", async (req, res) => {
         });
     }
 });
+// route to delete Students
+// app.get('/deleteusers',async(req,res)=>{
+//     try {
+//         const result = await Student.deleteMany({}); 
+    
+//         res.status(200).json({ 
+//           message: `Deleted ${result.deletedCount} students`, 
+//           result 
+//         });
+//       } catch (error) {
+//         console.error(error);
+//         res.status(500).json({ 
+//           message: 'Error deleting students', 
+//           error 
+//         });
+//       }
+
+// })
 
 
 // Route to find a student by name
@@ -198,14 +218,17 @@ app.get('/AiRecommendation/:userid', async (req, res) => {
 });
 
 app.get('/' ,async(req,res)=>{
-    const workshops = await WorkShop.find();
-    const workshopNames = workshops.map(workshop => workshop.name);
-    const studentCounts = workshops.map(workshop => workshop.students.length);
-    res.status(200).json({
-        message:"Success ",
-        workshops: workshopNames,
-        students:studentCounts
-    });
+    try {
+        const workshops = await WorkShop.find();
+        const workshopNames = workshops.map(workshop => workshop.name);
+        const studentCounts = workshops.map(workshop => workshop.students.length);
+        res.render('chart', {
+            workshops
+        });
+    } catch(error){
+        console.error(error);
+        res.status(500).send('Server Error');
+    }
 });
 
 // setting postive responses 

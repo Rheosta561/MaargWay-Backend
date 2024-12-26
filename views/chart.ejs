@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MaargWay Server</title>
+    <link rel="icon" href="/images/Logo.png">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-950 text-gray-200">
+    <div class="container mx-auto max-w-7xl p-4 sm:p-6 md:p-8">
+        <div class="text-6xl text-zinc-50 text-center font-semibold md:text-8xl">
+            Maarg<span class="text-emerald-500">Way</span>
+          </div>
+          <hr class="w-11/12 md:w-2/3 mx-auto border rounded-lg mt-4 opacity-75" />
+          <div class="text-white text-center text-sm mt-2 opacity-75">
+            Your One Step Learning Path
+          </div>
+          <div class="text-white text-center text-xs opacity-75">
+            AI Powered Recommendation System
+          </div>
+          <div class="text-white text-center text-xs opacity-75">
+            Suggestions, Improvisations, etc. all at One Place
+          </div>
+          <div class="text-green-500 text-center text-xs opacity-75">
+            Server Site
+          </div>
+        <h1 class="text-6xl   mb-6 mt-10">Data Analysis</h1>
+
+        <div class="bg-gray-800 shadow-md rounded p-4 sm:p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4">Filter Workshops</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                    <label for="minPositive" class="block text-sm font-medium text-gray-400">
+                        Min Positive Responses:
+                    </label>
+                    <input 
+                        type="number" 
+                        id="minPositive" 
+                        placeholder="e.g., 10" 
+                        class="mt-1 block p-2 w-full rounded-md border-gray-600 bg-gray-700 text-gray-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    >
+                </div>
+                <div>
+                    <label for="maxNegative" class="block text-sm font-medium text-gray-400">
+                        Max Negative Responses:
+                    </label>
+                    <input 
+                        type="number" 
+                        id="maxNegative" 
+                        placeholder="e.g., 5" 
+                        class="mt-1 p-2 block w-full rounded-md border-gray-600 bg-gray-700 text-gray-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    >
+                </div>
+                <div>
+                    <label for="minStudents" class="block text-sm font-medium text-gray-400">
+                        Min Students Registered:
+                    </label>
+                    <input 
+                        type="number" 
+                        id="minStudents" 
+                        placeholder="e.g., 20" 
+                        class="mt-1 p-2 block w-full rounded-md border-gray-600 bg-gray-700 text-gray-200 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    >
+                </div>
+            </div>
+            <div class="mt-4 text-center md:text-left ">
+                <button 
+                    onclick="applyFilters()" 
+                    class="bg-emerald-800 text-white px-4 py-2 rounded shadow hover:bg-emerald-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-gray-900"
+                >Apply Filters
+                </button>
+            </div>
+        </div>
+        <div class="bg-gray-800 shadow-md rounded p-4 sm:p-6">
+            <div class="relative aspect-w-16 aspect-h-9">
+                <div class="text-5xl text-gray-200 text-center mb-4">Bar Graph</div>
+                <canvas id="workshopBarChart"></canvas>
+            </div>
+        </div>
+        <br>
+        <div class="bg-gray-800 shadow-md rounded p-4 sm:p-6">
+            <div class="relative aspect-w-16 aspect-h-9 mt-2">
+                <div class="text-5xl text-gray-200 text-center mb-4">Line Graph</div>
+                <canvas id="workshopLineChart"></canvas>
+            </div>
+        </div>
+        <div class="text-sm mt-4 text-center text-blue-600 ">
+            <a href="https://maargway.vercel.app/">Client Site Click Here</a>
+            
+        </div>
+        <div class="text-sm text-gray-500 mt-1 text-center  ">
+            Developed By | Anubhav Mishra
+            
+            
+        </div>
+    </div>
+
+    <script>
+        const workshopData = <%- JSON.stringify(workshops) %>;
+        let barChartInstance;
+        let lineChartInstance;
+
+        function getFilteredData({ minPositive = 0, maxNegative = Infinity, minStudents = 0 } = {}) {
+            return workshopData.filter(workshop => 
+                workshop.positive >= minPositive &&
+                workshop.negative <= maxNegative &&
+                workshop.students.length >= minStudents
+            );
+        }
+
+        function updateBarChart(data) {
+            const labels = data.map(workshop => workshop.name);
+            const positiveResponses = data.map(workshop => workshop.positive);
+            const negativeResponses = data.map(workshop => workshop.negative);
+
+            if (barChartInstance) {
+                barChartInstance.destroy();
+            }
+
+            const ctx = document.getElementById('workshopBarChart').getContext('2d');
+            barChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Positive Responses',
+                            data: positiveResponses,
+                            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            borderWidth: 1,
+                        },
+                        {
+                            label: 'Negative Responses',
+                            data: negativeResponses,
+                            backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                            borderColor: 'rgba(255, 99, 132, 1)',
+                            borderWidth: 1,
+                        },
+                    ],
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#E5E7EB' 
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: {
+                                color: '#E5E7EB',
+                            },
+                            grid: {
+                                color: '#374151',
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                color: '#E5E7EB',
+                            },
+                            grid: {
+                                color: '#374151',
+                            }
+                        },
+                    },
+                },
+            });
+        }
+
+        function updateLineChart(data) {
+            const labels = data.map(workshop => workshop.name);
+            const positiveResponses = data.map(workshop => workshop.positive);
+            const negativeResponses = data.map(workshop => workshop.negative);
+
+            if (lineChartInstance) {
+                lineChartInstance.destroy();
+            }
+
+            const ctx = document.getElementById('workshopLineChart').getContext('2d');
+            lineChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Positive Responses (Line)',
+                            data: positiveResponses,
+                            fill: false,
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            borderWidth: 2,
+                            tension: 0.1,
+                        },
+                        {
+                            label: 'Negative Responses (Line)',
+                            data: negativeResponses,
+                            fill: false,
+                            borderColor: 'rgba(255, 99, 132, 1)',
+                            borderWidth: 2,
+                            tension: 0.1,
+                        },
+                    ],
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#E5E7EB'
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: {
+                                color: '#E5E7EB',
+                            },
+                            grid: {
+                                color: '#374151',
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                color: '#E5E7EB',
+                            },
+                            grid: {
+                                color: '#374151',
+                            }
+                        },
+                    },
+                },
+            });
+        }
+
+        function applyFilters() {
+            const minPositive = parseInt(document.getElementById('minPositive').value) || 0;
+            const maxNegative = parseInt(document.getElementById('maxNegative').value) || Infinity;
+            const minStudents = parseInt(document.getElementById('minStudents').value) || 0;
+
+            const filteredData = getFilteredData({ minPositive, maxNegative, minStudents });
+            updateBarChart(filteredData);
+            updateLineChart(filteredData);
+        }
+
+        // Initialize charts with all data
+        updateBarChart(workshopData);
+        updateLineChart(workshopData);
+    </script>
+</body>
+</html>
